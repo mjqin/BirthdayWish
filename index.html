@@ -1,0 +1,252 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <title>星云链生日祝福小工具</title>
+    <link rel="stylesheet" href="lib/bootstrap-4.0.0-dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./index.css">
+
+</head>
+
+<body>
+    <link rel="stylesheet" href="lib/bootstrap-4.0.0-dist/css/bootstrap-datepicker.min.css">
+    <div>
+        <div class="jumbotron jumbotron-fluid">
+            <div class="container">
+                <h1 class="text-center display-6">生日祝福小工具</h1>
+                <h1 class="text-center display-6"><small>永久保存于星云链</small></h1>
+                <div class="jumbotron-a text-center">
+                    <button type="button" class="btn btn-primary btn-lg" id="btn-upload">创建生日祝福</button>
+                    <button type="button" class="btn btn-info btn-lg" id="btn-search">搜索生日祝福</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="container" id="content_div">
+            <div id="search_div" style="display: none;">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" placeholder="输入祝福编号" id="search-code">
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" id="search-btn">搜索</button>
+                    </div>
+                </div>
+                <div id="search_content">
+                    <div id="reward_template" style="display: none;">
+                        <div class="reward_div">
+                            <h3 class="blessed-text text-center">生日祝福小工具</h3>
+                            <h3 class="birthday-text text-center">生日祝福小工具</h3>
+                            <h3 class="bless-text text-center">生日祝福小工具</h3>
+                            <h3 class="messagecontent-text text-center">生日祝福小工具</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <form id="form_div">
+                <div class="form-group">
+                    <label for="bless">祝福人</label>
+                    <input type="text" class="form-control" id="bless">
+                </div>
+                <div class="form-group">
+                    <label for="blessed">祝福对象</label>
+                    <input type="text" class="form-control" id="blessed">
+                </div>
+
+
+                <div class="form-group">
+                    <label for="birthday">祝福对象生日</label>
+                    <input type='text' class='form-control selectData' id='birthday' name='birthday'>
+                </div>
+
+
+                <div class="form-group">
+                    <label for="messagecontent">祝福内容</label>
+                    <textarea rows="3" class="form-control" id="messagecontent"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="wishID">祝福ID<small>（唯一祝福编号）</small></label>
+                    <button type="button" class="btn btn-default btn-sm" id="generateID">生成ID</button>
+                    <button type="button" class="btn btn-default btn-sm" id="copyID">复制到剪贴板</button>
+                    <input type="text" class="form-control" id="wishID">
+
+                </div>
+
+                <button type="button" class="btn btn-success btn-lg" id="form_btn">提交</button>
+            </form>
+        </div>
+    </div>
+
+
+
+    <!---->
+    <!--script-->
+
+    <script src=lib/jquery-3.3.1.min.js></script>
+    <script src=lib/nebPay.js></script>
+    <script src=lib/sha1.js></script>
+    <script src=lib/bootstrap-4.0.0-dist/js/bootstrap-datepicker.js></script>
+    <script src=lib/bootstrap-4.0.0-dist/js/bootstrap-datepicker.min.js></script>
+    <script src=lib/bootstrap-4.0.0-dist/js/bootstrap.min.js></script>
+
+
+
+
+
+    <!--日期选择-->
+    <script>
+    $.fn.datepicker.dates['cn'] = {   //切换为中文显示
+        days: ["周日", "周一", "周二", "周三", "周四", "周五", "周六", "周日"],
+                daysShort: ["日", "一", "二", "三", "四", "五", "六", "七"],
+                daysMin: ["日", "一", "二", "三", "四", "五", "六", "七"],
+                months: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                monthsShort: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                today: "今天",
+                clear: "清除"
+    };
+
+    $('.selectData').datepicker({
+        autoclose: true, //自动关闭
+        beforeShowDay: $.noop,    //在显示日期之前调用的函数
+        calendarWeeks: false,     //是否显示今年是第几周
+        clearBtn: false,          //显示清除按钮
+        daysOfWeekDisabled: [],   //星期几不可选
+        endDate: Infinity,        //日历结束日期
+        forceParse: true,         //是否强制转换不符合格式的字符串
+        format: 'yyyy-mm-dd',     //日期格式
+        keyboardNavigation: true, //是否显示箭头导航
+        language: 'cn',           //语言
+        minViewMode: 0,
+        orientation: "auto",      //方向
+        rtl: false,
+        startDate: -Infinity,     //日历开始日期
+        startView: 0,             //开始显示
+        todayBtn: false,          //今天按钮
+        todayHighlight: false,    //今天高亮
+        weekStart: 0              //星期几是开始
+    });
+    </script>
+
+
+
+    <script>
+    var NebPay = require("nebpay");
+    var nebPay = new NebPay();
+
+
+    if (typeof(webExtensionWallet) === "undefined") {
+        $("#content_div").hide();
+        alert("请首先安装webExtensionWallet插件");
+    } else {
+        $("#content_div").show();
+    }
+
+
+
+
+    var dappAddress = "n1jkn4kQWNALetR16QBbSqmza77iFfLc3zt";
+
+    $("#btn-upload").click(function() {
+        $("#search_div").hide();
+        $("#form_div").show();
+    })
+
+    $("#btn-search").click(function() {
+        $("#search_div").show();
+        $("#form_div").hide();
+    })
+
+
+    //点击生成
+    $("#generateID").click(function() {
+        var tmpbless = $("#bless").val();
+        var tmpblessed = $("#blessed").val();
+        var tmpbirthday = $("#birthday").val();
+        if (tmpbless == "" || tmpblessed == "" || tmpbirthday == "") {
+            alert("表单请填写完整");
+            return;
+        }
+
+        var sha1 = hex_sha1(tmpbless + "-" + tmpblessed + "-" + tmpbirthday)
+        //alert(
+        document.getElementById("wishID").value= sha1;
+
+        //document.getElementById("code").value= tmpbless + "-" + tmpblessed + "-" + tmpbirthday;
+    })
+
+    //点击复制
+    $("#copyID").click(function() {
+        var e=document.getElementById("wishID");//对象是contents
+        e.select(); //选择对象 （全选）
+        document.execCommand("Copy"); //执行浏览器复制命令
+    })
+
+
+
+    $("#form_btn").click(function() {
+        var bless = $("#bless").val();
+        var blessed = $("#blessed").val();
+        var birthday = $("#birthday").val();
+        var messagecontent = $("#messagecontent").val();
+        var wishID = $("#wishID").val();
+        if (bless == "" || blessed == "" || birthday == "" || messagecontent == "" || wishID == "") {
+            alert("表单请填写完整");
+            return;
+        }
+
+        var to = dappAddress;
+        var value = "0";
+        var callFunction = "add";
+        var callArgs = "[\"" + bless + "\",\"" + blessed + "\",\"" + birthday + "\",\"" + messagecontent + "\",\"" + wishID + "\"]";
+        //监听
+        nebPay.call(to, value, callFunction, callArgs, {
+            listener: submitHandle
+        });
+    })
+
+    function submitHandle(resp) {
+        alert("已提交，稍后点击搜索进行内容查看");
+    }
+
+    $("#search-btn").click(function() {
+        var search = $("#search-code").val();
+        if (search == "") {
+            alert("请首先输入搜索编号");
+            return;
+        }
+        var to = dappAddress;
+        var value = "0";
+        var callFunction = "searchwish";
+        var callArgs = "[\"" + search + "\"]";
+        console.log("search:" + search);
+        nebPay.simulateCall(to, value, callFunction, callArgs, {
+            listener: searchHandle
+        });
+    })
+
+
+    function searchHandle(resp) {
+        console.log(resp);
+        var res = JSON.parse(resp.result);
+        if (!res) {
+            alert("未找到该祝福");
+            return;
+        }
+        var sDiv = $("#search_content");
+        var rewardTemplate = $("#reward_template");
+        //console.log("ss",res);
+
+        sDiv.empty();
+
+        rewardTemplate.find('.blessed-text').text(res.blessed + ", 您好：");
+        rewardTemplate.find('.messagecontent-text').text("生日寄语："+res.messagecontent);
+        rewardTemplate.find('.bless-text').text(res.bless+"祝您生日快乐！");
+        rewardTemplate.find('.birthday-text').text(res.birthday+"是您的生日。");
+
+        sDiv.append(rewardTemplate.html());
+    }
+    </script>
+</body>
+
+</html>
